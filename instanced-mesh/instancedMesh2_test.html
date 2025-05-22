@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>InstancedMesh2 Bug Test</title>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", 
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+                "@three.ez/instanced-mesh": "https://cdn.jsdelivr.net/npm/@three.ez/instanced-mesh@0.3.4/build/index.js",
+                "bvh.js": "https://cdn.jsdelivr.net/npm/bvh.js/build/index.js"
+            }
+        }
+    </script>
+</head>
+<body>
+    <script type="module">
+        import * as THREE from 'three';
+        import { InstancedMesh2 } from '@three.ez/instanced-mesh';
+
+        // Basic scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 20;
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        const geometry = new THREE.SphereGeometry(0.2, 8, 8);
+        const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+
+        const instancedMesh = new InstancedMesh2(geometry, material, {
+            capacity: 50, // Initial capacity
+            createEntities: true,
+        });
+        scene.add(instancedMesh);
+
+        console.log("InstancedMesh2 initialized:", instancedMesh);
+
+        function fireProjectileTest(idPrefix = "Test") {
+            console.log(`--- [${idPrefix}] Firing. instancedMesh.count BEFORE call: ${instancedMesh.count}, instancedMesh.instances.length: ${instancedMesh.instances ? instancedMesh.instances.length : 'N/A'} ---`);
+
+            let callbackEntityId = -1;
+            let callbackEntityRef = null;
+
+            const returnedEntity = instancedMesh.addInstances(1, (entity, index) => {
+                callbackEntityId = entity.id;
+                callbackEntityRef = entity;
+                console.log(`[${idPrefix}] addInstances CALLBACK. Entity provided - ID: ${entity.id}, Index: ${index}. instancedMesh.count (in callback, pre-lib-increment): ${instancedMesh.count}`);
+                
+                entity.visible = true;
+                entity.position.set(Math.random() * 10 - 5, Math.random() * 10 - 5, 0);
+                // entity.updateMatrix(); // Per docs, might be needed. Test with/without.
+            });
+
+            console.log(`[${idPrefix}] After addInstances call. instancedMesh.count AFTER call: ${instancedMesh.count}`);
+            
+            if (returnedEntity) {
+                console.log(`[${idPrefix}] addInstances returned a single entity. Type: ${typeof returnedEntity}, ID: ${returnedEntity.id !== undefined ? returnedEntity.id : 'ReturnedEntity N/A or no ID'}`);
+                if (callbackEntityRef && callbackEntityRef === returnedEntity) {
+                    console.log(`[${idPrefix}] Consistency: Callback entity MATCHES returned entity.`);
+                } else {
+                    console.warn(`[${idPrefix}] MISMATCH: Callback entity (ID: ${callbackEntityId}) vs Returned entity (ID: ${returnedEntity.id !== undefined ? returnedEntity.id : 'N/A'})!`);
+                }
+            } else {
+                console.error(`[${idPrefix}] addInstances returned null or undefined.`);
+            }
+
+            if (instancedMesh.instances && Array.isArray(instancedMesh.instances)) {
+                console.log(`[${idPrefix}] instancedMesh.instances array exists. Length: ${instancedMesh.instances.length}`);
+                if (instancedMesh.instances.length > 0) {
+                    const lastEntityInArray = instancedMesh.instances[instancedMesh.instances.length - 1];
+                    console.log(`[${idPrefix}] Last entity in instancedMesh.instances array - ID: ${lastEntityInArray ? (lastEntityInArray.id !== undefined ? lastEntityInArray.id : 'No ID') : 'N/A'}`);
+                    if (callbackEntityRef && lastEntityInArray === callbackEntityRef) {
+                        console.log(`[${idPrefix}] Consistency: Callback entity matches last entity in instancedMesh.instances array.`);
+                    } else if (callbackEntityRef) {
+                         console.warn(`[${idPrefix}] MISMATCH: Callback entity (ID: ${callbackEntityId}) vs Last entity in array (ID: ${lastEntityInArray ? (lastEntityInArray.id !== undefined ? lastEntityInArray.id : 'No ID') : 'N/A'})!`);
+                    }
+                }
+            }
+            console.log(`----------------------------------------------------`);
+            return callbackEntityRef; // Return the entity from the callback
+        }
+
+        // Simulate firing multiple projectiles
+        const firedEntities = [];
+        for (let i = 0; i < 15; i++) {
+            console.log(`Attempting to fire projectile #${i + 1}`);
+            const fe = fireProjectileTest(`Projectile_${i + 1}`);
+            if(fe) firedEntities.push(fe);
+        }
+
+        // Basic render loop to see instances (if count allows)
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Add a button to test firing after initial load
+        const button = document.createElement('button');
+        button.textContent = 'Fire 5 More Test Projectiles';
+        button.style.position = 'absolute';
+        button.style.top = '10px';
+        button.style.left = '10px';
+        button.onclick = () => {
+            for (let i = 0; i < 5; i++) {
+                fireProjectileTest(`ButtonFire_${i + 1}`);
+            }
+        };
+        document.body.appendChild(button);
+
+    </script>
+</body>
+</html>
