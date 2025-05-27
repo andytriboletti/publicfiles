@@ -1,0 +1,18 @@
+{
+  "name": "navmesh-geometry-issue-test",
+  "version": "1.0.0",
+  "description": "Test case for recast-navigation polygon connectivity issue",
+  "type": "module",
+  "main": "navmesh_geometry_issue_test.js",
+  "scripts": {
+    "test": "node navmesh_geometry_issue_test.js"
+  },
+  "dependencies": {
+    "@recast-navigation/core": "^0.39.0",
+    "@recast-navigation/three": "^0.39.0",
+    "three": "^0.172.0"
+  },
+  "keywords": ["recast-navigation", "navmesh", "pathfinding", "three.js"],
+  "author": "Test Case",
+  "license": "MIT"
+}
