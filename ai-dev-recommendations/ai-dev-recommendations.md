@@ -40,9 +40,8 @@ I can't recommend @coderabbitai AI pull request reviews enough. It is so thoroug
 ---
 
 I setup npm run so it 1) clears the terminal 2) kills any other npm run dev commands. It makes using Cursor easier.
+
 ---
-
-
 
 Has anybody ever exported a task list from AugmentCode to Markdown(md) format, committed it to a branch and created a Pull Request, and had CodeRabbit review your task list, make the edits via task manager, and reimport the new master list?
 
